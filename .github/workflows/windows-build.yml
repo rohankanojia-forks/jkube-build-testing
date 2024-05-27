@@ -1,0 +1,46 @@
+name: Windows Build Testing 
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Eclipse JKube branch to test
+        default: 'master'
+      repository:
+        description: Eclipse JKube repository to test
+        default: https://github.com/eclipse/jkube.git
+
+env:
+  MAVEN_ARGS: -B -C -V -ntp -Dhttp.keepAlive=false -e
+  BUILD_NAME: jkube
+
+jobs:
+  build:
+    name: BuildWithoutTests
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [17]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cache .m2 registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: cache-e2e-${{ github.sha }}-${{ github.run_id }}
+      - name: Clone 
+        run: |
+          git config --system core.longpaths true
+          git clone ${{ github.event.inputs.repository }} --branch ${{ github.event.inputs.branch }} $env:BUILD_NAME
+      - name: Setup Java 
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - name: Build  
+        run: |
+          cd $env:BUILD_NAME
+          mvn -DskipTests clean install
+          mvn clean install
