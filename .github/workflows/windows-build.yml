@@ -43,4 +43,4 @@ jobs:
         run: |
           cd $env:BUILD_NAME
           mvn -DskipTests clean install
-          mvn clean install
+          mvn clean install -pl -gradle-plugin/it
